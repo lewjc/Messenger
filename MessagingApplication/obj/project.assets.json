@@ -670,11 +670,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/Lew/Projects/MessagingApplication/MessagingApplication/MessagingApplication.csproj",
+      "projectUniqueName": "/Users/Lew/Projects/Messenger/MessagingApplication/MessagingApplication.csproj",
       "projectName": "MessagingApplication",
-      "projectPath": "/Users/Lew/Projects/MessagingApplication/MessagingApplication/MessagingApplication.csproj",
+      "projectPath": "/Users/Lew/Projects/Messenger/MessagingApplication/MessagingApplication.csproj",
       "packagesPath": "/Users/Lew/.nuget/packages/",
-      "outputPath": "/Users/Lew/Projects/MessagingApplication/MessagingApplication/obj",
+      "outputPath": "/Users/Lew/Projects/Messenger/MessagingApplication/obj",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
