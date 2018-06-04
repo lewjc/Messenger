@@ -5,4 +5,11 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Client\" />
+    <Folder Include="Client\User\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Client\User.cs" />
+  </ItemGroup>
 </Project>
