@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Client.Client.User
+namespace Client.Client.UserLib
 {
     public class User
     {

@@ -6,7 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Server\" />
+    <Folder Include="ServerLib\" />
+    <Folder Include="MenuLib\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj" />

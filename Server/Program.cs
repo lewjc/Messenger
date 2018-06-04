@@ -1,4 +1,5 @@
 ﻿using System;
+using Server.ServerLib;
 
 namespace MessagingApplication
 {
@@ -6,7 +7,8 @@ namespace MessagingApplication
     {
         static void Main(string[] args)
         {
-            
+            // Get the server instance, this starts the server
+            HostServer server = HostServer.serverInstance;        
         }
     }
 }

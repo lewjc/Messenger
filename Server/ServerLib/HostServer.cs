@@ -7,13 +7,16 @@ using System.Collections.Generic;
 using Client.Client.UserLib;
             
             
-namespace ServerLib.Server
+namespace Server.ServerLib
 {
-    public class Server
+    public class HostServer
     {
 
+        // Max Message length
+        public static readonly int MAX_MESSAGE = 2048;
+
         // instance of the server class
-        private static Server instance = null;
+        private static HostServer instance = null;
         // IP address of the server to host the messaging system
         private IPAddress HOST { get; set; }
 
@@ -30,7 +33,7 @@ namespace ServerLib.Server
         /// </summary>
         /// <param name="host">IP address of the server</param>
         /// <param name="port">Port to open the socket on</param>
-        private Server(int port, string host)
+        private HostServer(int port, string host)
         {
             PORT = port;
             HOST = IPAddress.Parse(host);
@@ -40,14 +43,14 @@ namespace ServerLib.Server
         }
 
         // Server property 
-        public static Server serverInstance
+        public static HostServer serverInstance
         {
             get
             {   // Here we check to see if there already exists an instance of the server class
                 // We do this 
                 if(instance == null)
                 {
-                    instance = new Server(8000, "127.0.0.1");
+                    instance = new HostServer(8000, "127.0.0.1");
                 }
                 return instance;
 
@@ -93,7 +96,8 @@ namespace ServerLib.Server
         /// <param name="clientNumber">Client number.</param>
         /// <param name="client">Client socket connection</param>
         /// 
-        private void manageUserLogin(int clientNumber, TcpClient client){
+        private void manageUserLogin(int clientNumber, TcpClient client)
+        {
             
             // Presenting a menu to the user, allow them to make their choice on what to do.
             // Loop until the user has made a correct choice
@@ -114,8 +118,29 @@ namespace ServerLib.Server
                 // Converting the bytes to a manipulatiable string
                 string userInput = Encoding.ASCII.GetString(textBuffer, 0, response);
 
+                // Checking if the user's input is within the login menu choice constraints, this allows us to pass
+                // a correct input into the function to determine what the user wants to do.
+                if(MenuLib.Menu.verifyLoginMenuChoice(userInput))
+                {
+                    MenuLib.Menu.LoginMenu(userInput);
+                } else{
+                    // The user has not input a viable choice, so we tell them to try again
+
+
+                }
 
             }
+        }
+        /// <summary>
+        /// Sends a message to the specified client's input stream
+        /// </summary>
+        /// <param name="message">The message to be sent.</param>
+        /// <param name="clientStream">The clients input stream of which the message is being sent..</param>
+        private void sendMessage(string message, NetworkStream clientStream)
+        {
+            byte[] textBuffer = Encoding.ASCII.GetBytes(message);
+            // Output the menu
+            clientStream.Write(textBuffer, 0, textBuffer.Length);
         }
     }
 }

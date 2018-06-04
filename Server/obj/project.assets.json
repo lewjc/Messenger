@@ -200,6 +200,9 @@
       "Client/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v2.0",
+        "dependencies": {
+          "Microsoft.NETCore.App": "2.0.0"
+        },
         "compile": {
           "bin/placeholder/Client.dll": {}
         },
@@ -686,17 +689,17 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/Lew/Projects/Messenger/MessagingApplication/Server.csproj",
+      "projectUniqueName": "/Users/Lew/Projects/Messenger/Server/Server.csproj",
       "projectName": "Server",
-      "projectPath": "/Users/Lew/Projects/Messenger/MessagingApplication/Server.csproj",
+      "projectPath": "/Users/Lew/Projects/Messenger/Server/Server.csproj",
       "packagesPath": "/Users/Lew/.nuget/packages/",
-      "outputPath": "/Users/Lew/Projects/Messenger/MessagingApplication/obj",
+      "outputPath": "/Users/Lew/Projects/Messenger/Server/obj/",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
       ],
       "configFilePaths": [
-        "/Users/Lew/.config/NuGet/NuGet.Config"
+        "/Users/Lew/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "netcoreapp2.0"
@@ -723,9 +726,8 @@
       "netcoreapp2.0": {
         "dependencies": {
           "Microsoft.NETCore.App": {
-            "suppressParent": "All",
             "target": "Package",
-            "version": "2.0",
+            "version": "[2.0.0, )",
             "autoReferenced": true
           }
         },

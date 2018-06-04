@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <Folder Include="Client\" />
-    <Folder Include="Client\User\" />
+    <Folder Include="Client\UserLib\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Client\User.cs" />
