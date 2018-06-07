@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Net;
-using Client.Client;
+using Client.ClientLib;
 
 namespace Client
 {
@@ -15,24 +15,35 @@ namespace Client
         {
             // First we need to get the host and port for the server that we are connecting to
             // TODO: restrict input - Regexes, ip lenth checkting etc. 
-
-            Console.WriteLine("Welcome to the messaging service, Enter host address - ");
-            string host = Console.ReadLine();
-            Console.WriteLine("Enter port to connect on - ");
-            string port = Console.ReadLine();
-
-            // Attempting the connection, try catch the many errors
-            try
+            while (true)
             {
-                TcpClient client = new TcpClient();
-                client.Connect(IPAddress.Parse(host), Int32.Parse(port));
-                ClientConnection clientConnection = new ClientConnection(client);
-                Console.ReadLine();
 
-            } catch (Exception e){
+                Console.WriteLine("Welcome to the messaging service, Enter host address - ");
+                string host = Console.ReadLine();
+                Console.WriteLine("Enter port to connect on - ");
+                string port = Console.ReadLine();
 
-                Console.WriteLine(e);
+                // Attempting the connection, try catch the many errors
+                try
+                {
+
+                    TcpClient client = new TcpClient();
+                    client.Connect(IPAddress.Parse(host), Int32.Parse(port));
+                    ClientConnection clientConnection = new ClientConnection(client);
+
+                }
+                catch (SocketException)
+                {
+                    // If the port is not open or incorrect
+                    Console.WriteLine(String.Format("Socket error occured - Connection refused at {0}:{1} - Maybe port or IP is incorrect?", host, port));
+                }
+                catch (FormatException e)
+                {
+                    Console.WriteLine(e + "\n");
+                }
+
             }
+           
 
         }
     }

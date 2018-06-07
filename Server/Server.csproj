@@ -8,8 +8,13 @@
   <ItemGroup>
     <Folder Include="ServerLib\" />
     <Folder Include="MenuLib\" />
+    <Folder Include="DatabaseLib\" />
+    <Folder Include="DatabaseLib\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="2.1.3" />
   </ItemGroup>
 </Project>

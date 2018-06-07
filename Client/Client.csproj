@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Client\" />
-    <Folder Include="Client\UserLib\" />
+    <Folder Include="ClientLib\" />
+    <Folder Include="UserLib\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Client\User.cs" />

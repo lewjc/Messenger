@@ -1,10 +1,9 @@
 ﻿using System;
 
-namespace Client.Client.UserLib
+namespace Client.UserLib
 {
     public class User
     {
-        
         int number { get; set; }
         string username { get; set; }
 
@@ -13,7 +12,6 @@ namespace Client.Client.UserLib
             this.number = number;
             this.username = username;
         }
-
 
     }
 }

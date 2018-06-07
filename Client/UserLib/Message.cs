@@ -1,5 +1,5 @@
 ﻿using System;
-namespace Client.Client.UserLib
+namespace Client.UserLib
 {
     public class Message
     {
