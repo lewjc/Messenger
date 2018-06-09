@@ -56,7 +56,20 @@ namespace Server.ServerLib
             PORT = port;
             HOST = IPAddress.Parse(host);
             serverSocket = new TcpListener(HOST, PORT);
-            GetClientConnections();
+            while (true)
+            {
+
+                try
+                {
+                    GetClientConnections();
+                }
+                catch (SocketException)
+                {
+                    Console.WriteLine("Address already in use! trying connection again 1 second...");
+                }
+            }
+                
+
 
         }
 
@@ -87,8 +100,9 @@ namespace Server.ServerLib
                     newClientThread.Start();
 
                 }
-            } catch(Exception e){
-                Console.WriteLine(e);
+            } catch(SocketException){
+                Console.WriteLine("Address already in use!");
+                Thread.Sleep(1000);
             }
         }
         /// <summary>
@@ -117,7 +131,7 @@ namespace Server.ServerLib
                     if (LoginMenu.verifyLoginMenuChoice(userInput))
                     {
                         // Send off the input to 
-                        User clientUserAccount = LoginMenu.loginUser(userInput, client);
+                        User clientUserAccount = LoginMenu.loginUser(userInput, client, clientNumber);
 
                         // If the user wants to quit
                         if (clientUserAccount == null)
@@ -125,7 +139,7 @@ namespace Server.ServerLib
                             SendMessage("Your session has been ended. Type Exit to terminate program.\n", client.GetStream());
                             // If the user wants to quit, we simply terminate the connection.
                             client.GetStream().Close();
-                            client.Closex);
+                            client.Close();
                             client.Dispose();
                             // Return to close this thread that the user is operating on.
                             return;
@@ -135,9 +149,7 @@ namespace Server.ServerLib
                     {
                         // Tell the current client to try again.
                         SendMessage("Invalid Input, try agian.", stream);
-
                     }
-
                 } 
             }
             catch (IOException ex)
