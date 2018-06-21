@@ -7,7 +7,7 @@ namespace Server.ServerLib
     public class PasswordEncryptor
     {
         // We have this extra salt as an extra layer of security for the encrypted password.
-        private static String extraSalt = "TT-|>";
+        public static String extraSalt = "TT-|>";
 
         public static string GenerateNewPassword(string userPassword)
         {
@@ -17,7 +17,7 @@ namespace Server.ServerLib
 
         public static bool CheckPassword(string passwordToCheck, string hashedPassword)
         {
-            return Encrypt.Verify(passwordToCheck, hashedPassword);
+            return Encrypt.Verify(passwordToCheck + extraSalt, hashedPassword);
         }
 
     }

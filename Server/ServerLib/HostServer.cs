@@ -114,15 +114,16 @@ namespace Server.ServerLib
         /// 
         private void ManageUserLogin(int clientNumber, TcpClient client)
         {
-            // Presenting and sending the menu to the user, allow them to make their choice on what to do.
-            NetworkStream stream = client.GetStream();
-            SendMessage(LoginMenu.loginMenuString, stream);
-          
             try
             {
                 // Loop until the user has made a correct choice
                 while (true)
                 {
+                    
+                    // Presenting and sending the menu to the user, allow them to make their choice on what to do.
+                    NetworkStream stream = client.GetStream();
+                    SendMessage(LoginMenu.LoginMenuString, stream);
+          
                     // Read the users input
                     string userInput = RecieveMessage(client.GetStream());
 
@@ -130,11 +131,13 @@ namespace Server.ServerLib
                     // a correct input into the function to determine what the user wants to do.
                     if (LoginMenu.verifyLoginMenuChoice(userInput))
                     {
-                        // Send off the input to 
-                        User clientUserAccount = LoginMenu.loginUser(userInput, client, clientNumber);
+                        // Send off the input to the login menu, to allow the user to login.
+                        var loginInformation = LoginMenu.ManageUserChoice(userInput, client, clientNumber);
+                        bool shouldUserQuit = loginInformation.Item1;
+                        User userAccount = loginInformation.Item2;
 
                         // If the user wants to quit
-                        if (clientUserAccount == null)
+                        if (shouldUserQuit)
                         {
                             SendMessage("Your session has been ended. Type Exit to terminate program.\n", client.GetStream());
                             // If the user wants to quit, we simply terminate the connection.
@@ -144,6 +147,19 @@ namespace Server.ServerLib
                             // Return to close this thread that the user is operating on.
                             return;
                         }
+
+                        // The user wants to view the menu again
+                        else if ((!shouldUserQuit) && (userAccount == null))
+                        {
+                            continue;
+                        }
+                        // The user is logged in
+                        else
+                        {
+                            // TODO: Main menu stuff, add user to current client list.
+                        }
+
+
                     }
                     else
                     {

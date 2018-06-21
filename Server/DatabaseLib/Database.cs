@@ -7,6 +7,8 @@ namespace Server.DatabaseLib
 {
     public class Database
     {
+        private static Database databaseInstance = null;
+
         // Login information. for the database connection.
         private string host = "138.68.152.134";
         private string database = "messenger";
@@ -17,15 +19,11 @@ namespace Server.DatabaseLib
         // String to establish the connection to the database with
         public string ConnectionString { get; private set; }
 
-        private MySqlConnection Connection;
-       
-            
         /// <summary>
         /// Initializes a new instance of the Database class.
         /// </summary>
-        public Database()
+        private Database()
         {
-            Connection = null;
             MySqlConnectionStringBuilder connectionBuilder = new MySqlConnectionStringBuilder();
 
 
@@ -40,7 +38,18 @@ namespace Server.DatabaseLib
             ConnectionString = connectionBuilder.ConnectionString;
         }
 
-       
+        public static Database instance
+        {
+            get
+            {
+                if (databaseInstance == null)
+                {
+                    databaseInstance = new Database();
+                }
 
+                return databaseInstance;
+
+            }
+        }
     }
 }
