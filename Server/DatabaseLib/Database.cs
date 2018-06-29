@@ -9,7 +9,7 @@ namespace Server.DatabaseLib
     {
         private static Database databaseInstance = null;
 
-        // Login information. for the database connection.
+        // Login information for the database connection.
         private string host = "138.68.152.134";
         private string database = "messenger";
         private string user = "messenger_admin";
@@ -38,7 +38,11 @@ namespace Server.DatabaseLib
             ConnectionString = connectionBuilder.ConnectionString;
         }
 
-        public static Database instance
+        /// <summary>
+        /// Gets the instance.
+        /// </summary>
+        /// <value>The instance.</value>
+        public static Database Instance
         {
             get
             {
@@ -51,5 +55,14 @@ namespace Server.DatabaseLib
 
             }
         }
+
+        /// <summary>
+        /// Loads the database info.
+        /// </summary>
+        public static void LoadDatabaseInfo()
+        {
+            Console.WriteLine(String.Format("Database connection established: Name - {0} Port - {1}",Database.Instance.database, Database.Instance.port));
+        }
+
     }
 }
