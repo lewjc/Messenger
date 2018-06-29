@@ -14,14 +14,11 @@ namespace Client.ClientLib
         private TcpClient client;
         public static readonly int MAX_MESSAGE = 2048;
         private byte[] messageBuffer = new byte[MAX_MESSAGE];
-        public NetworkStream clientStream;
 
 
         public ClientConnection(TcpClient client)
         {
             this.client = client;
-            clientStream = client.GetStream();
-
             Thread recieveThread = new Thread(recieveMessages);
             recieveThread.Start();
             sendMessage();
@@ -52,16 +49,22 @@ namespace Client.ClientLib
 
                     this.messageBuffer = Encoding.ASCII.GetBytes(userInput);
 
-                    this.clientStream.Write(this.messageBuffer, 0, messageBuffer.Length);
+                    this.client.GetStream().Write(this.messageBuffer, 0, messageBuffer.Length);
                 }
             }
             catch (IOException ex)
             {
+                
                 Console.WriteLine("Unable to write message - Connection lost.");
+                return;
+
             }
-            catch (ObjectDisposedException)
+            catch (Exception)
             {
+                return;
             }
+
+
 
         }
 
@@ -78,7 +81,7 @@ namespace Client.ClientLib
             {
                 while (true)
                 {
-                    byteCount = clientStream.Read(receivedBytes, 0, receivedBytes.Length);
+                    byteCount = client.GetStream().Read(receivedBytes, 0, receivedBytes.Length);
                     Console.Write(Encoding.ASCII.GetString(receivedBytes, 0, byteCount));
                 }
 
@@ -86,9 +89,11 @@ namespace Client.ClientLib
             catch(IOException)
             {
                 Console.Write("Unable to read data - Connection lost.");
+
             }
             catch (ObjectDisposedException)
             {
+                return;
             }
 
         }
