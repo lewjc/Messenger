@@ -33,7 +33,7 @@ namespace Server.ServerLib
         public TcpListener serverSocket;
 
         // Server property 
-        public static HostServer serverInstance
+        public static HostServer ServerInstance
         {
             get
             {   // Here we check to see if there already exists an instance of the server class
@@ -61,6 +61,9 @@ namespace Server.ServerLib
 
                 try
                 {
+                    // Send off a new thread to intialise the database information from the json info file.
+                    Thread initialiseDatabase = new Thread(DatabaseLib.Database.LoadDatabaseInfo);
+                    initialiseDatabase.Start();
                     GetClientConnections();
                 }
                 catch (SocketException)
@@ -102,7 +105,7 @@ namespace Server.ServerLib
                 }
             } catch(SocketException){
                 Console.WriteLine("Address already in use!");
-                Thread.Sleep(1000);
+                Thread.Sleep(3000);
             }
         }
         /// <summary>
@@ -129,7 +132,7 @@ namespace Server.ServerLib
 
                     // Checking if the user's input is within the login menu choice constraints, this allows us to pass
                     // a correct input into the function to determine what the user wants to do.
-                    if (LoginMenu.verifyLoginMenuChoice(userInput))
+                    if (LoginMenu.VerifyLoginMenuChoice(userInput))
                     {
                         // Send off the input to the login menu, to allow the user to login.
                         var loginInformation = LoginMenu.ManageUserChoice(userInput, client, clientNumber);
@@ -146,13 +149,14 @@ namespace Server.ServerLib
                             client.Dispose();
                             // Return to close this thread that the user is operating on.
                             return;
-                        }
+                        } 
 
                         // The user wants to view the menu again
-                        else if ((!shouldUserQuit) && (userAccount == null))
+                        if ((!shouldUserQuit) && (userAccount == null))
                         {
                             continue;
                         }
+
                         // The user is logged in
                         else
                         {
@@ -174,6 +178,8 @@ namespace Server.ServerLib
             }
 
         }
+
+
         /// <summary>
         /// Sends a message to the specified client's input stream
         /// </summary>
