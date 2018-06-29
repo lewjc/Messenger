@@ -16,11 +16,11 @@ namespace Server.MenuLib
         {
             get
             {
-                return "[MENU - MAKE A CHOICE]\n[0]Quit\n[1]Login\n[2]New User\n";    
+                return "\n[MENU - MAKE A CHOICE]\n[0]Quit\n[1]Login\n[2]New User\n";    
             }
         } 
 
-        public static Boolean verifyLoginMenuChoice(string input)
+        public static Boolean VerifyLoginMenuChoice(string input)
         {
             return (input == "0") || (input == "1") || (input == "2");
         }
@@ -34,8 +34,8 @@ namespace Server.MenuLib
         /// Returns a tuple of a boolean and a user object. First value is a bool
         /// to determine if the user wants to quit or if they just want to view the login menu again.
         /// </returns>
-        /// <param name="input">The use input for the menu.</param>
-        /// <param name="clientConnection">The client</param>
+        /// <param name="input">The user input for the menu.</param>
+        /// <param name="clientConnection">The client tcp connection</param>
         /// <param name="currentClientNumber">The number of the client in the current server session.</param>
         public static Tuple<bool, User> ManageUserChoice(string input, TcpClient clientConnection, int currentClientNumber)
         {
@@ -43,14 +43,22 @@ namespace Server.MenuLib
             bool shouldQuit = true;
             switch (input)
             {
+                // Here the suer wants to exit.
                 case("0"):
                     return new Tuple<bool, User>(shouldQuit, null);
                 // Here we are logging in the user
+                
                 case("1"):
+                    // Should quit is false as the user is attempting a login.
+                    // login user should return a complete use object. if the user fails to login, null is 
+                    // returned, indicating a failed login and is dealt with on the return of this function.
+
                     return new Tuple<bool, User>(shouldQuit = false, LoginUser(clientConnection, currentClientNumber));
-                // Here we are creating a new user
+                
+                // Here we are creating a new user 
                 case("2"):
                     RegisterNewUser(clientConnection, currentClientNumber);
+                    return new Tuple<bool, User>(shouldQuit = false, LoginUser(clientConnection, currentClientNumber));
                     break;
 
                 default:
@@ -89,15 +97,16 @@ namespace Server.MenuLib
 
                 try
                 {
-                    string getUsernameQuery = "SELECT username, password, first_name, user_type FROM user_accounts WHERE username = ?username;";
+                    string getUsernameQuery = "SELECT * FROM user_accounts WHERE username = ?username;";
 
                     // Holds info grabbed from the db
                     string dbPassword = null;
                     string dbUsername = null;
                     int permissions = 0;
+                    string lastname = null;
                     string firstname = null;
 
-                    using (MySqlConnection con = new MySqlConnection(Database.instance.ConnectionString))
+                    using (MySqlConnection con = new MySqlConnection(Database.Instance.ConnectionString))
                     {
                         
                         con.Open();
@@ -118,8 +127,9 @@ namespace Server.MenuLib
                                     {
                                         dbUsername = queryReader.GetString(queryReader.GetOrdinal("username"));
                                         dbPassword = queryReader.GetString(queryReader.GetOrdinal("password"));
-                                        permissions = queryReader.GetInt32(queryReader.GetOrdinal("permissions"));
+                                        permissions = queryReader.GetInt32(queryReader.GetOrdinal("user_type"));
                                         firstname = queryReader.GetString(queryReader.GetOrdinal("first_name"));
+                                        lastname = queryReader.GetString(queryReader.GetOrdinal("last_name"));
 
                                     }
                                     catch (Exception e)
@@ -141,6 +151,7 @@ namespace Server.MenuLib
 
                                     // Used to decide if the user wants to continue with the login,
                                     bool continueLogin = true;
+
                                     // Use this as a form of user input error checking, so we only get y or n.
                                     bool decisionNotMade = true;
 
@@ -168,8 +179,8 @@ namespace Server.MenuLib
                                                 continue;
                                         }
                                     }
+
                                     // If the user does not want to continue attempting the login then we return a null user
-                                    // 
                                     // the user is not logged in.
                                     if (!continueLogin)
                                     {
@@ -187,11 +198,8 @@ namespace Server.MenuLib
                                 return new User(currentClientNumber, username, firstname, permissions);
 
                             }
-
                         }
-
                     }
-
                 }
 
                 catch (InvalidOperationException)
@@ -224,7 +232,7 @@ namespace Server.MenuLib
 
             bool usernameValid = false;
             bool usernameExists = false;
-            string newUsername = null;
+            string username = null;
 
             // While the username the user inputs is invalid, ask for a correct one.
             while (!usernameValid)
@@ -236,7 +244,8 @@ namespace Server.MenuLib
 
                 // We must also check to see if that username already exists for another user.
 
-                using (MySqlConnection connection = new MySqlConnection(Database.instance.ConnectionString))
+                HostServer.SendMessage("Checking username...\n", clientConnection.GetStream());
+                using (MySqlConnection connection = new MySqlConnection(Database.Instance.ConnectionString))
                 {
                     connection.Open();
                     using (MySqlCommand usernameExistsCommand = connection.CreateCommand())
@@ -251,9 +260,8 @@ namespace Server.MenuLib
                         {
                             usernameExists = true;   
                         }
-                       
                     }
-                    
+                    connection.Close();
                 }
 
                 // Here we put our username validity conditionals, space for more can be added
@@ -264,14 +272,16 @@ namespace Server.MenuLib
                 {
                     // Satisfies our length requirement
                     usernameValid = true;
-                    newUsername = inputUsername;
+                    username = inputUsername;
                     HostServer.SendMessage("Username Accepted!\n", clientConnection.GetStream());
                 }
+                // Username exists already for a user
                 else if (usernameExists)
                 {
                     HostServer.SendMessage("Username already exists! Please choose another.", clientConnection.GetStream());
                     continue;
                 }
+                // Username doesn't fall into our criteria
                 else
                 {
                     HostServer.SendMessage("Username does not satisfy requirements, please insert a new one.", clientConnection.GetStream());
@@ -286,22 +296,26 @@ namespace Server.MenuLib
 
             Console.WriteLine("Username validated");
 
+            // Used to decide if the password is correctly validated.
+
             bool passwordValidated = false;
             string encryptedPassword = null;
 
-            HostServer.SendMessage("Password must be atleast 6 characters and contain 1 lowercase, 1 uppercase.\n", clientConnection.GetStream());
+            HostServer.SendMessage("Password must be between 8 and 15 characters, contain 1 lowercase, 1 uppercase letter and a digit.\n", clientConnection.GetStream());
 
             // While the user has not input a valid password, we must ask and check for a correct one.
             while (!passwordValidated)
             {
+                
                 HostServer.SendMessage("Enter Password: ", clientConnection.GetStream());
                 string userInputPassword = HostServer.RecieveMessage(clientConnection.GetStream());
 
+                // IF the password has one upper case, one lower case, a number and between 8 and 15 characters
                 if (Regex.IsMatch(userInputPassword, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,15}$"))
                 {
                     // If the password contains a lower case and uppercase and at least 1 number.
                     passwordValidated = true;
-                    encryptedPassword = BCrypt.Net.BCrypt.HashPassword(PasswordEncryptor.GenerateNewPassword(userInputPassword));
+                    encryptedPassword = PasswordEncryptor.GenerateNewPassword(userInputPassword);
                 }
                 else
                 {
@@ -314,6 +328,77 @@ namespace Server.MenuLib
             /////////////////////
             ///   USER INFO   ///
             /////////////////////
+
+            // To do, get first name, last name and date of birth.
+            HostServer.SendMessage("Please enter your personal information\nWhat is your first name? ", clientConnection.GetStream());
+
+            string firstName = HostServer.RecieveMessage(clientConnection.GetStream());
+
+            HostServer.SendMessage("What is your last name? ", clientConnection.GetStream());
+
+            string lastName = HostServer.RecieveMessage(clientConnection.GetStream());
+
+            // Here we're getting the user's date of birth, going to implement age restrictions for 13 on this messaging service.
+            HostServer.SendMessage("Please enter in format dd/mm/yyyy, dd.mm.yyyy, dd-mm-yyyy.\nWhat is your date of birth? ", clientConnection.GetStream());
+
+            // while a valid dob has not been input.
+            bool dateValid = false;
+            DateTime realDOB = new DateTime();
+
+            while (!dateValid)
+            {
+                string dob = HostServer.RecieveMessage(clientConnection.GetStream());
+
+                // If dob is in form dd/mm/yyyy or dd.mm.yyyy or dd-mm-yyyy, it is correct.
+                // TODO: validate against the actual roman calander.(only dates that might not be correct is february 29th or something.) 
+                if (Regex.IsMatch(dob, "^([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0]?[1-9]|[1][0-2])[./-]([0-9]{4}|[0-9]{2})$"))
+                {
+                    try
+                    {
+                        // convert the dob into a date time object, use this to convert to an sql date object,
+                        // then leave the loop to insert data into database.
+                        realDOB = DateTime.Parse(dob);
+                        break;
+                        
+                    }
+                    catch (FormatException)
+                    {
+                        Console.WriteLine("Unable to parse date, incorrect format.");
+                        HostServer.SendMessage("Try again.", clientConnection.GetStream());
+                        continue;
+                    }
+
+                }
+            }
+
+            try
+            {
+                // Inserting new user into database
+                using (var databaseConnection = new MySqlConnection(Database.Instance.ConnectionString))
+                {
+                    string insertUserQuery = "INSERT INTO user_accounts(username, password, first_name, last_name, dob, user_since, user_type) VALUES (?username, ?password, ?firstname, ?lastname, ?dob, CURRENT_TIMESTAMP(), 1)";
+                    databaseConnection.Open();
+
+                    using (var command = databaseConnection.CreateCommand())
+                    {
+                        command.CommandText = insertUserQuery;
+                        command.Parameters.Add("?username", MySqlDbType.VarChar).Value = username;
+                        command.Parameters.Add("?password", MySqlDbType.VarChar).Value = encryptedPassword;
+                        command.Parameters.Add("?firstname", MySqlDbType.VarChar).Value = firstName;
+                        command.Parameters.Add("?lastname", MySqlDbType.VarChar).Value = lastName;
+                        command.Parameters.Add("?dob", MySqlDbType.Date).Value = realDOB;
+
+                        command.ExecuteNonQuery();
+                    }
+
+                    databaseConnection.Close();
+                    HostServer.SendMessage("\nUser Registered.\n", clientConnection.GetStream());
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Error inputting to database - " + e);
+            }
 
 
         }

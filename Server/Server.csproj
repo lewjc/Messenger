@@ -10,7 +10,6 @@
     <Folder Include="MenuLib\" />
     <Folder Include="DatabaseLib\" />
     <Folder Include="DatabaseLib\" />
-    <Folder Include="DatabaseLib\QueryLib\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj" />
