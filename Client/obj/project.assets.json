@@ -664,28 +664,30 @@
     ]
   },
   "packageFolders": {
-    "/Users/Lew/.nuget/packages/": {},
-    "/usr/local/share/dotnet/sdk/NuGetFallbackFolder": {}
+    "C:\\Users\\Lewis\\.nuget\\packages\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/Lew/Projects/Messenger/Client/Client.csproj",
+      "projectUniqueName": "C:\\Users\\Lewis\\Documents\\Projects\\Messenger\\Client\\Client.csproj",
       "projectName": "Client",
-      "projectPath": "/Users/Lew/Projects/Messenger/Client/Client.csproj",
-      "packagesPath": "/Users/Lew/.nuget/packages/",
-      "outputPath": "/Users/Lew/Projects/Messenger/Client/obj",
+      "projectPath": "C:\\Users\\Lewis\\Documents\\Projects\\Messenger\\Client\\Client.csproj",
+      "packagesPath": "C:\\Users\\Lewis\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Lewis\\Documents\\Projects\\Messenger\\Client\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
       ],
       "configFilePaths": [
-        "/Users/Lew/.config/NuGet/NuGet.Config"
+        "C:\\Users\\Lewis\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "netcoreapp2.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -703,9 +705,8 @@
       "netcoreapp2.0": {
         "dependencies": {
           "Microsoft.NETCore.App": {
-            "suppressParent": "All",
             "target": "Package",
-            "version": "2.0",
+            "version": "[2.0.0, )",
             "autoReferenced": true
           }
         },
