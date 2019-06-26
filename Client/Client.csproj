@@ -11,5 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Client\User.cs" />
+    <Compile Remove="Customers.cs" />
+    <Compile Remove="UserLib\Message.cs" />
   </ItemGroup>
 </Project>

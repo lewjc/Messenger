@@ -5,11 +5,11 @@ using Server.ServerLib;
 using Server.DatabaseLib;
 using MySql.Data.MySqlClient;
 using System.Text.RegularExpressions;
-            
+using Dependency;
+
 namespace Server.MenuLib
-                
 {
-    public class LoginMenu
+    public static class LoginMenu
     {
         // The login menu to be output to clients.
         public static string LoginMenuString 
@@ -43,7 +43,7 @@ namespace Server.MenuLib
             bool shouldQuit = true;
             switch (input)
             {
-                // Here the suer wants to exit.
+                // Here the user     wants to exit.
                 case("0"):
                     return new Tuple<bool, User>(shouldQuit, null);
                 // Here we are logging in the user
@@ -57,10 +57,8 @@ namespace Server.MenuLib
                 
                 // Here we are creating a new user 
                 case("2"):
-                    RegisterNewUser(clientConnection, currentClientNumber);
+                    RegisterNewUser(clientConnection);
                     return new Tuple<bool, User>(shouldQuit = false, LoginUser(clientConnection, currentClientNumber));
-                    break;
-
                 default:
                     Console.WriteLine("Invalid user choice input");
                     break;
@@ -85,13 +83,13 @@ namespace Server.MenuLib
                 Console.WriteLine("Logging user information");
 
                 // User wants to login, so we ask them for their username and password.
-                HostServer.SendMessage("Enter Username - ", clientConnection.GetStream());
-                string username = HostServer.RecieveMessage(clientConnection.GetStream());
+                SocketStream.SendMessage("Enter Username - ", clientConnection.GetStream());
+                string username = SocketStream.RecieveMessage(clientConnection.GetStream());
 
                 Console.WriteLine(username);
 
-                HostServer.SendMessage("Enter Password - ", clientConnection.GetStream());
-                string password = HostServer.RecieveMessage(clientConnection.GetStream());
+                SocketStream.SendMessage("Enter Password - ", clientConnection.GetStream());
+                string password = SocketStream.RecieveMessage(clientConnection.GetStream());
 
                 Console.WriteLine(password);
 
@@ -147,7 +145,7 @@ namespace Server.MenuLib
                                     // Not too sure whether or not to be specific about which one
                                     // The vagueness in the message increases security though, as 
                                     // Someone trying to guess a user's account might not know which one.
-                                    HostServer.SendMessage("Username or password is incorrect, Try again? Y/N\n", clientConnection.GetStream());
+                                    SocketStream.SendMessage("Username or password is incorrect, Try again? Y/N\n", clientConnection.GetStream());
 
                                     // Used to decide if the user wants to continue with the login,
                                     bool continueLogin = true;
@@ -157,7 +155,7 @@ namespace Server.MenuLib
 
                                     while (decisionNotMade)
                                     {
-                                        string userResponse = HostServer.RecieveMessage(clientConnection.GetStream());
+                                        string userResponse = SocketStream.RecieveMessage(clientConnection.GetStream());
 
                                         switch (userResponse.ToLower())
                                         {
@@ -175,7 +173,7 @@ namespace Server.MenuLib
                                             // If the choice is not what we want, send the message saying incorrect response and
                                             // try again.
                                             default:
-                                                HostServer.SendMessage("Invalid input, try again.", clientConnection.GetStream());
+                                                SocketStream.SendMessage("Invalid input, try again.", clientConnection.GetStream());
                                                 continue;
                                         }
                                     }
@@ -193,7 +191,7 @@ namespace Server.MenuLib
 
                                 // If this point is reached, the user has entered successful login information.
 
-                                HostServer.SendMessage(String.Format("Welcome back, {0}", firstname), clientConnection.GetStream());
+                                SocketStream.SendMessage(String.Format("Welcome back, {0}", firstname), clientConnection.GetStream());
 
                                 return new User(currentClientNumber, username, firstname, permissions);
 
@@ -217,129 +215,33 @@ namespace Server.MenuLib
         /// Registers a new user into the messenger database
         /// </summary>
         /// <param name="clientConnection">Client tcp connection.</param>
-        /// <param name="clientNumber">Client number for this current session.</param>
-        private static void RegisterNewUser(TcpClient clientConnection, int clientNumber)
+        private static void RegisterNewUser(TcpClient clientConnection)
         {
             // Display the info asking for the user to input registration 
 
             string registationMenu = "[REGISTRATION MENU]\nUsername must be between 3 and 20 characters\n";
-            HostServer.SendMessage(registationMenu, clientConnection.GetStream());
+            SocketStream.SendMessage(registationMenu, clientConnection.GetStream());
 
-
-            /////////////////////////////
-            ///  USERNAME VALIDATION  ///
-            /////////////////////////////
-
-            bool usernameValid = false;
-            bool usernameExists = false;
-            string username = null;
+            string username = GetNewUsername(clientConnection);
+            string encryptedPassword = GetNewPassword(clientConnection);
 
             // While the username the user inputs is invalid, ask for a correct one.
-            while (!usernameValid)
-            {
-                HostServer.SendMessage("Please enter username: ", clientConnection.GetStream());
-
-                string inputUsername = HostServer.RecieveMessage(clientConnection.GetStream());
-                int usernameLength = inputUsername.Length;
-
-                // We must also check to see if that username already exists for another user.
-
-                HostServer.SendMessage("Checking username...\n", clientConnection.GetStream());
-                using (MySqlConnection connection = new MySqlConnection(Database.Instance.ConnectionString))
-                {
-                    connection.Open();
-                    using (MySqlCommand usernameExistsCommand = connection.CreateCommand())
-                    {
-                        usernameExistsCommand.CommandText = "SELECT username from user_accounts WHERE username = ?username";
-                        usernameExistsCommand.Parameters.Add("?username", MySqlDbType.VarChar).Value = inputUsername;
-
-                        // Here we execute the command to the database and if it returns a non null value, the username exists
-                        string usernameInDatabase = (string) usernameExistsCommand.ExecuteScalar();
-
-                        if (usernameInDatabase != null)
-                        {
-                            usernameExists = true;   
-                        }
-                    }
-                    connection.Close();
-                }
-
-                // Here we put our username validity conditionals, space for more can be added
-                // if there are more constraints to be added at a later date
-                // such as certain strings not being accepted.
-
-                if (usernameLength >= 3 && usernameLength <= 20)
-                {
-                    // Satisfies our length requirement
-                    usernameValid = true;
-                    username = inputUsername;
-                    HostServer.SendMessage("Username Accepted!\n", clientConnection.GetStream());
-                }
-                // Username exists already for a user
-                else if (usernameExists)
-                {
-                    HostServer.SendMessage("Username already exists! Please choose another.", clientConnection.GetStream());
-                    continue;
-                }
-                // Username doesn't fall into our criteria
-                else
-                {
-                    HostServer.SendMessage("Username does not satisfy requirements, please insert a new one.", clientConnection.GetStream());
-                    continue;
-                }
-            }
-
-
-            /////////////////////////////
-            ///  PASSWORD VALIDATION  ///
-            /////////////////////////////
-
-            Console.WriteLine("Username validated");
-
-            // Used to decide if the password is correctly validated.
-
-            bool passwordValidated = false;
-            string encryptedPassword = null;
-
-            HostServer.SendMessage("Password must be between 8 and 15 characters, contain 1 lowercase, 1 uppercase letter and a digit.\n", clientConnection.GetStream());
-
-            // While the user has not input a valid password, we must ask and check for a correct one.
-            while (!passwordValidated)
-            {
-                
-                HostServer.SendMessage("Enter Password: ", clientConnection.GetStream());
-                string userInputPassword = HostServer.RecieveMessage(clientConnection.GetStream());
-
-                // IF the password has one upper case, one lower case, a number and between 8 and 15 characters
-                if (Regex.IsMatch(userInputPassword, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,15}$"))
-                {
-                    // If the password contains a lower case and uppercase and at least 1 number.
-                    passwordValidated = true;
-                    encryptedPassword = PasswordEncryptor.GenerateNewPassword(userInputPassword);
-                }
-                else
-                {
-                    // The password is invalid
-                    HostServer.SendMessage("\nPassword invalid. Try again.\n", clientConnection.GetStream());
-                    continue;
-                }
-            }
 
             /////////////////////
             ///   USER INFO   ///
             /////////////////////
 
             // To do, get first name, last name and date of birth.
-            HostServer.SendMessage("Please enter your personal information\nWhat is your first name? ", clientConnection.GetStream());
+            SocketStream.SendMessage("Please enter your personal information\nWhat is your first name? ", clientConnection.GetStream());
 
-            string firstName = HostServer.RecieveMessage(clientConnection.GetStream());
+            string firstName = SocketStream.RecieveMessage(clientConnection.GetStream());
 
-            HostServer.SendMessage("What is your last name? ", clientConnection.GetStream());
+            SocketStream.SendMessage("What is your last name? ", clientConnection.GetStream());
 
-            string lastName = HostServer.RecieveMessage(clientConnection.GetStream());
+            string lastName = SocketStream.RecieveMessage(clientConnection.GetStream());
 
             // Here we're getting the user's date of birth, going to implement age restrictions for 13 on this messaging service.
-            HostServer.SendMessage("Please enter in format dd/mm/yyyy, dd.mm.yyyy, dd-mm-yyyy.\nWhat is your date of birth? ", clientConnection.GetStream());
+            SocketStream.SendMessage("Please enter in format dd/mm/yyyy, dd.mm.yyyy, dd-mm-yyyy.\nWhat is your date of birth? ", clientConnection.GetStream());
 
             // while a valid dob has not been input.
             bool dateValid = false;
@@ -347,7 +249,7 @@ namespace Server.MenuLib
 
             while (!dateValid)
             {
-                string dob = HostServer.RecieveMessage(clientConnection.GetStream());
+                string dob = SocketStream.RecieveMessage(clientConnection.GetStream());
 
                 // If dob is in form dd/mm/yyyy or dd.mm.yyyy or dd-mm-yyyy, it is correct.
                 // TODO: validate against the actual roman calander.(only dates that might not be correct is february 29th or something.) 
@@ -364,7 +266,7 @@ namespace Server.MenuLib
                     catch (FormatException)
                     {
                         Console.WriteLine("Unable to parse date, incorrect format.");
-                        HostServer.SendMessage("Try again.", clientConnection.GetStream());
+                        SocketStream.SendMessage("Try again.", clientConnection.GetStream());
                         continue;
                     }
 
@@ -392,14 +294,131 @@ namespace Server.MenuLib
                     }
 
                     databaseConnection.Close();
-                    HostServer.SendMessage("\nUser Registered.\n", clientConnection.GetStream());
+                    SocketStream.SendMessage("\nUser Registered.\n", clientConnection.GetStream());
                 }
             }
+
             catch (Exception e)
             {
                 Console.WriteLine("Error inputting to database - " + e);
             }
+        }
 
+        /// <summary>
+        /// Gets the new username.
+        /// </summary>
+        /// <returns>The new username.</returns>
+        /// <param name="clientConnection">Client connection.</param>
+        private static string GetNewUsername(TcpClient clientConnection)
+        {
+
+            /////////////////////////////
+            ///  USERNAME VALIDATION  ///
+            /////////////////////////////
+
+            bool usernameValid = false;
+            bool usernameExists = false;
+            string username = null;
+          
+            
+            while (!usernameValid)
+            {
+                SocketStream.SendMessage("Please enter username: ", clientConnection.GetStream());
+
+                string inputUsername = SocketStream.RecieveMessage(clientConnection.GetStream());
+                int usernameLength = inputUsername.Length;
+
+                // We must also check to see if that username already exists for another user.
+
+                SocketStream.SendMessage("Checking username...\n", clientConnection.GetStream());
+                using (MySqlConnection connection = new MySqlConnection(Database.Instance.ConnectionString))
+                {
+                    connection.Open();
+                    using (MySqlCommand usernameExistsCommand = connection.CreateCommand())
+                    {
+                        usernameExistsCommand.CommandText = "SELECT username from user_accounts WHERE username = ?username";
+                        usernameExistsCommand.Parameters.Add("?username", MySqlDbType.VarChar).Value = inputUsername;
+
+                        // Here we execute the command to the database and if it returns a non null value, the username exists
+                        string usernameInDatabase = (string) usernameExistsCommand.ExecuteScalar();
+
+                        if (usernameInDatabase != null)
+                        {
+                            usernameExists = true;
+
+                        }
+                    }
+                    connection.Close();
+                }
+
+                // Here we put our username validity conditionals, space for more can be added
+                // if there are more constraints to be added at a later date
+                // such as certain strings not being accepted.
+
+                if (usernameLength >= 3 && usernameLength <= 20)
+                {
+                    // Satisfies our length requirement
+                    usernameValid = true;
+                    username = inputUsername;
+                    SocketStream.SendMessage("Username Accepted!\n", clientConnection.GetStream());
+                }
+                // Username exists already for a user
+                else if (usernameExists)
+                {
+                    SocketStream.SendMessage("Username already exists! Please choose another.", clientConnection.GetStream());
+                    continue;
+                }
+                // Username doesn't fall into our criteria
+                else
+                {
+                    SocketStream.SendMessage("Username does not satisfy requirements, please insert a new one.", clientConnection.GetStream());
+                    continue;
+                }
+            }
+
+            return username;
+        }
+
+        public static string GetNewPassword(TcpClient clientConnection)
+        { 
+
+            /////////////////////////////
+            ///  PASSWORD VALIDATION  ///
+            /////////////////////////////
+
+            Console.WriteLine("Username validated");
+
+            // Used to decide if the password is correctly validated.
+
+            bool passwordValidated = false;
+            string encryptedPassword = null;
+
+            SocketStream.SendMessage("Password must be between 8 and 15 characters, contain 1 lowercase, 1 uppercase letter and a digit.\n", clientConnection.GetStream());
+
+            // While the user has not input a valid password, we must ask and check for a correct one.
+            while (!passwordValidated)
+            {
+
+                SocketStream.SendMessage("Enter Password: ", clientConnection.GetStream());
+                string userInputPassword = SocketStream.RecieveMessage(clientConnection.GetStream());
+
+                // IF the password has one upper case, one lower case, a number and between 8 and 15 characters
+                if (Regex.IsMatch(userInputPassword, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,15}$"))
+                {
+                    // If the password contains a lower case and uppercase and at least 1 number.
+                    passwordValidated = true;
+                    encryptedPassword = PasswordEncryptor.GenerateNewPassword(userInputPassword);
+
+                }
+                else
+                {
+                    // The password is invalid
+                    SocketStream.SendMessage("\nPassword invalid. Try again.\n", clientConnection.GetStream());
+                    continue;
+                }
+            }
+
+            return encryptedPassword;
 
         }
     }

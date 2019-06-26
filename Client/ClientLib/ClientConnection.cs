@@ -1,34 +1,31 @@
 ﻿using System;
 using System.Threading;
 using System.Net.Sockets;
-using System.Net;
 using System.IO;
 using System.Text;
-using System.Collections.Generic;
 
-namespace Client.ClientLib
-                
-{
-    public class ClientConnection
+namespace Client.ClientLib                
+{    
+    public class ClientConnection : IDisposable
     {
         private TcpClient client;
         public static readonly int MAX_MESSAGE = 2048;
         private byte[] messageBuffer = new byte[MAX_MESSAGE];
-
+        private readonly NetworkStream clientStream;
 
         public ClientConnection(TcpClient client)
         {
             this.client = client;
-            Thread recieveThread = new Thread(recieveMessages);
+            Thread recieveThread = new Thread(RecieveMessages);
+            this.clientStream = client.GetStream();
             recieveThread.Start();
-            sendMessage();
-
+            SendMessage();
         }
 
         /// <summary>
         /// Sends message to the server
         /// </summary>
-        private void sendMessage()
+        private void SendMessage()
         {
             try
             {
@@ -41,17 +38,16 @@ namespace Client.ClientLib
                     {
                         case "exit":
                             this.client.GetStream().Close();
-                            this.client.Close();
-                            this.client.Dispose();
                             return;
 
                     }
 
                     this.messageBuffer = Encoding.ASCII.GetBytes(userInput);
 
-                    this.client.GetStream().Write(this.messageBuffer, 0, messageBuffer.Length);
+                    this.clientStream.Write(this.messageBuffer, 0, messageBuffer.Length);
                 }
             }
+
             catch (IOException ex)
             {
                 
@@ -63,17 +59,13 @@ namespace Client.ClientLib
             {
                 return;
             }
-
-
-
         }
 
         /// <summary>
-        /// Recieves the messages from the server, running continuoulsy on a seperate thread.
+        /// Recieves the messages from the server, running continuously on a seperate thread.
         /// </summary>
-        private void recieveMessages()
+        private void RecieveMessages()
         {
-            
             byte[] receivedBytes = new byte[MAX_MESSAGE];
             int byteCount = 0;
 
@@ -81,22 +73,30 @@ namespace Client.ClientLib
             {
                 while (true)
                 {
-                    byteCount = client.GetStream().Read(receivedBytes, 0, receivedBytes.Length);
-                    Console.Write(Encoding.ASCII.GetString(receivedBytes, 0, byteCount));
+                    byteCount = clientStream.Read(receivedBytes, 0, receivedBytes.Length);
+                    string message = Encoding.ASCII.GetString(receivedBytes, 0, byteCount);
+                    //if (message.Split("-")[0].Equals("CHANGEPORTREQUEST"))
+                    //{
+                    //    this.client.Connect(client.Client
+                    //}
+                    Console.Write(message);
                 }
-
             } 
+
             catch(IOException)
             {
                 Console.Write("Unable to read data - Connection lost.");
-
             }
             catch (ObjectDisposedException)
             {
                 return;
             }
-
         }
 
+        public void Dispose()
+        {
+            clientStream.Close();
+            clientStream.Dispose();
+        }
     }
 }

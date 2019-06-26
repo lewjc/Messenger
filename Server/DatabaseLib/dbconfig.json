@@ -1,7 +1,6 @@
 ﻿ {
-   "database": {
-     
-       "host": "192.168.0.1",
+ "database": {
+       "host": "138.68.152.134",
        "port": "3306",
        "database_name": "messenger",
        "user": "messenger_admin",

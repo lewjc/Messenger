@@ -1,7 +1,11 @@
 ﻿using System;
+using System.IO;
 using MySql.Data.MySqlClient;
 using System.Data.Common;
+using System.Collections.Generic;
 using System.Data.SqlTypes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Server.DatabaseLib
 {
@@ -10,11 +14,11 @@ namespace Server.DatabaseLib
         private static Database databaseInstance = null;
 
         // Login information for the database connection.
-        private string host = "138.68.152.134";
-        private string database = "messenger";
-        private string user = "messenger_admin";
-        private string password = "pvdZiOOvU2MgasvM";
-        private uint port = 3306;
+        private readonly string host;
+        private readonly uint port;
+        private readonly string database = "messenger";
+        private readonly string user =        "messenger_admin";
+        private readonly string password = "pvdZiOOvU2MgasvM";
 
         // String to establish the connection to the database with
         public string ConnectionString { get; private set; }
@@ -61,8 +65,48 @@ namespace Server.DatabaseLib
         /// </summary>
         public static void LoadDatabaseInfo()
         {
+            string currentPath = Path.Combine(Directory.GetCurrentDirectory(), @"DatabaseLib/dbconfig.json");
+            Console.WriteLine(currentPath);
+            try
+            {
+                using (var file = File.OpenText(currentPath))
+                {
+                    List<string> jsonValues = new List<string>();
+
+                    try
+                    {
+                        using (JsonTextReader jsonReader = new JsonTextReader(file))
+                        {
+                            while (jsonReader.Read())
+                            {
+                                // If we have a JSON value, store it.
+                                // This catches values such as the start of an array and start object values, which
+                                // we have no use for.
+                                if (jsonReader.Value != null)
+                                {
+                                    jsonValues.Add((string) jsonReader.Value);
+                                }
+
+                            }
+                        }
+                    }
+
+                    catch (JsonReaderException e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine("File does not exist");
+            }
+            catch (DirectoryNotFoundException)
+            {
+                Console.WriteLine("Directory doesn't exist");
+            }
             Console.WriteLine(String.Format("Database connection established: Name - {0} Port - {1}",Database.Instance.database, Database.Instance.port));
         }
 
     }
-}
+} 

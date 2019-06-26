@@ -674,13 +674,13 @@
       "projectName": "Client",
       "projectPath": "/Users/Lew/Projects/Messenger/Client/Client.csproj",
       "packagesPath": "/Users/Lew/.nuget/packages/",
-      "outputPath": "/Users/Lew/Projects/Messenger/Client/obj/",
+      "outputPath": "/Users/Lew/Projects/Messenger/Client/obj",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
       ],
       "configFilePaths": [
-        "/Users/Lew/.nuget/NuGet/NuGet.Config"
+        "/Users/Lew/.config/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "netcoreapp2.0"
@@ -703,8 +703,9 @@
       "netcoreapp2.0": {
         "dependencies": {
           "Microsoft.NETCore.App": {
+            "suppressParent": "All",
             "target": "Package",
-            "version": "[2.0.0, )",
+            "version": "2.0",
             "autoReferenced": true
           }
         },

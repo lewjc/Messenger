@@ -10,12 +10,17 @@
     <Folder Include="MenuLib\" />
     <Folder Include="DatabaseLib\" />
     <Folder Include="DatabaseLib\" />
+    <Folder Include="RoomLib\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Client\Client.csproj" />
+    <ProjectReference Include="..\Dependency\Dependency.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="2.1.3" />
     <PackageReference Include="MySql.Data" Version="8.0.11" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="MongoDB.Driver" Version="2.8.1" />
+    <PackageReference Include="MongoDB.Bson" Version="2.8.1" />
   </ItemGroup>
 </Project>

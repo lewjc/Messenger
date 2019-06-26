@@ -7,30 +7,28 @@ using System.Text;
 using System.Collections.Generic;
 using Client.UserLib;
 using Server.MenuLib;
-            
-            
+using Dependency;
+using System.Collections.Concurrent;
+using Server.RoomLib;
+
 namespace Server.ServerLib
 {
-    public class HostServer
+    public class HostServer : SocketStream
     {
-
-        // Max Message length
-        public static readonly int MAX_MESSAGE = 2048;
-
         // instance of the server class
-        private static HostServer instance = null;
+        private static HostServer instance;
 
         // IP address of the server to host the messaging system
         private IPAddress HOST { get; set; }
 
-        // Holds the current users logged into the system.
-        private Dictionary<int, User> clientList = new Dictionary<int, User>();
-
         // Port to open the socket on
         private int PORT { get; set; }
 
-        // Listening socket, used for establishing connection
-        public TcpListener serverSocket;
+        private ConcurrentDictionary<int, IChatRoom> ChatRooms;
+
+        private IMainMenuLogic mainMenuLogic;
+
+        private readonly ILoginMenuLogic loginMenuLogic;
 
         // Server property 
         public static HostServer ServerInstance
@@ -55,10 +53,10 @@ namespace Server.ServerLib
         {
             PORT = port;
             HOST = IPAddress.Parse(host);
-            serverSocket = new TcpListener(HOST, PORT);
+            instanceSocket = new TcpListener(HOST, PORT);
+            ChatRooms = new ConcurrentDictionary<int, IChatRoom>();
             while (true)
             {
-
                 try
                 {
                     // Send off a new thread to intialise the database information from the json info file.
@@ -71,9 +69,6 @@ namespace Server.ServerLib
                     Console.WriteLine("Address already in use! trying connection again 1 second...");
                 }
             }
-                
-
-
         }
 
         /// <summary>
@@ -85,8 +80,7 @@ namespace Server.ServerLib
             int clientCounter = 0;
             try
             {
-
-                serverSocket.Start();
+                instanceSocket.Start();
                 Console.WriteLine(String.Format("Server: {0} Init on port {1}", HOST, PORT));
 
                 while (true)
@@ -94,20 +88,32 @@ namespace Server.ServerLib
                     // Here we incrememnt the client counter and wait for a new client to connect to the server.
                     clientCounter++;
                     // Waiting for a new client to establish connection
-                    client = serverSocket.AcceptTcpClient();
+                    client = instanceSocket.AcceptTcpClient();
                     // Load the client onto a new thread
-                    Thread newClientThread = new Thread(() => ManageUserLogin(clientCounter, client));
+
+                    Thread newClientThread = new Thread(() => Entry(clientCounter, client));
                     Console.WriteLine(String.Format("Client {0} connected to the server", clientCounter));
 
                     // Start the new client's thread.
                     newClientThread.Start();
-
                 }
             } catch(SocketException){
                 Console.WriteLine("Address already in use!");
                 Thread.Sleep(3000);
             }
         }
+
+        private void Entry(int clientNumber, TcpClient client)
+        {
+            User threadUser = ManageUserLogin(clientNumber, client);
+            if (threadUser == null) 
+            {
+                // The thread is closed.
+                return;
+            }
+            mainMenuLogic = new MainMenuLogic(threadUser);
+        }
+
         /// <summary>
         /// Here is where the user will login to the system, using previous credentials.
         /// if they have not before made an account, they will be prompted to.
@@ -115,7 +121,7 @@ namespace Server.ServerLib
         /// <param name="clientNumber">Client number.</param>
         /// <param name="client">Client socket connection</param>
         /// 
-        private void ManageUserLogin(int clientNumber, TcpClient client)
+        private User ManageUserLogin(int clientNumber, TcpClient client)
         {
             try
             {
@@ -134,7 +140,7 @@ namespace Server.ServerLib
                     // a correct input into the function to determine what the user wants to do.
                     if (LoginMenu.VerifyLoginMenuChoice(userInput))
                     {
-                        // Send off the input to the login menu, to allow the user to login.
+                        // S    §end off the input to the login menu, to allow the user to login.
                         var loginInformation = LoginMenu.ManageUserChoice(userInput, client, clientNumber);
                         bool shouldUserQuit = loginInformation.Item1;
                         User userAccount = loginInformation.Item2;
@@ -148,8 +154,8 @@ namespace Server.ServerLib
                             client.Close();
                             client.Dispose();
                             // Return to close this thread that the user is operating on.
-                            return;
-                        } 
+                            return null;
+                        }
 
                         // The user wants to view the menu again
                         if ((!shouldUserQuit) && (userAccount == null))
@@ -158,49 +164,19 @@ namespace Server.ServerLib
                         }
 
                         // The user is logged in
-                        else
-                        {
-                            // TODO: Main menu stuff, add user to current client list.
-                        }
-
-
+                        // Assign the current tcp client connection to this user,
+                        userAccount.Connection = client;
+                        return userAccount;
                     }
-                    else
-                    {
-                        // Tell the current client to try again.
-                        SendMessage("Invalid Input, try agian.", stream);
-                    }
-                } 
+                    // Tell the current client to try again.
+                    SendMessage("Invalid Input, try agian.", stream);
+                }
             }
             catch (IOException ex)
             {
-                Console.WriteLine("Unable to read data from client. ABORTING." + ex);
+                Console.WriteLine("Unable to read data from client. ABORTING.\n" + ex);
+                return null;
             }
-
-        }
-
-
-        /// <summary>
-        /// Sends a message to the specified client's input stream
-        /// </summary>
-        /// <param name="message">The message to be sent.</param>
-        /// <param name="clientStream">The clients input stream of which the message is being sent..</param>
-        public static void SendMessage(string message, NetworkStream clientStream)
-        {
-            byte[] textBuffer = Encoding.ASCII.GetBytes(message);
-            // Output the menu
-            clientStream.Write(textBuffer, 0, textBuffer.Length);
-
-            Console.WriteLine("Message sent");
-        }
-
-        public static string RecieveMessage(NetworkStream stream)
-        {
-            byte[] textBuffer = new byte[MAX_MESSAGE];
-
-            int response = stream.Read(textBuffer, 0, textBuffer.Length);
-            // Converting the bytes to a manipulatiable string
-            return Encoding.ASCII.GetString(textBuffer, 0, response);
         }
     }
 }
